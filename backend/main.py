@@ -1,8 +1,8 @@
-from parser import parse_page
 from database import engine, SessionLocal
 from models import Base, Comic
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from parsers.manager import get_latest_chapter
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -16,7 +16,7 @@ app.add_middleware(
 
 @app.post("/reading")
 def add_reading(url: str):
-    data = parse_page(url)
+    data = get_latest_chapter(url)
 
     db = SessionLocal()
 
