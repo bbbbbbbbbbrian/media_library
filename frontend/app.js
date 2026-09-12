@@ -61,6 +61,7 @@ async function loadReadingList() {
                 alert("Could not connect to the backend.");
             }
         });
+        
         const readButton = document.createElement("a");
         readButton.href = comic.current_url;
         readButton.textContent = "Read";

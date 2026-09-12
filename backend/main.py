@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from parsers.manager import get_latest_chapter
 from parsers.asura import AsuraParse
+from parsers.katana import MangaKatanaParse
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -57,7 +58,19 @@ def update_chapter(comic_id: int, current_chapter: str):
     if not comic:
         return {"error": "Reading not found"}
 
-    parser = AsuraParse()
+    parsers = [
+        AsuraParse(),
+        MangaKatanaParse()
+    ]
+
+    parser = next(
+        (p for p in parsers if p.can_handle(comic.series_url)),
+        None
+    )
+
+    if not parser:
+        return {"error": "No parser available for this site"}
+
     chapters = parser.get_chapters(comic.series_url)
 
     print("SERIES URL:", comic.series_url)

@@ -1,7 +1,8 @@
 from .asura import AsuraParse
+from .katana import MangaKatanaParse
 
 parsers = [
-    AsuraParse(),
+    AsuraParse(), MangaKatanaParse()
 ]
 
 def get_latest_chapter(url):
