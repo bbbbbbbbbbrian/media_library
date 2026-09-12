@@ -33,7 +33,8 @@ h2 {
 }
 
 .read-button,
-.delete-button {
+.delete-button,
+.update-button {
     padding: 8px 14px;
     border: none;
     border-radius: 5px;
@@ -46,7 +47,8 @@ h2 {
     margin-right: 8px;
 }
 
-.delete-button {
+.delete-button,
+.update-button {
     background-color: #ddd;
 }
 

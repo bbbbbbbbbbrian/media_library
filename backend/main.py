@@ -3,6 +3,7 @@ from models import Base, Comic
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from parsers.manager import get_latest_chapter
+from parsers.asura import AsuraParse
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -23,21 +24,21 @@ def add_reading(url: str):
     comic = db.query(Comic).filter(Comic.title == data["title"]).first()
 
     if comic:
-        comic.chapter = data["chapter"]
-        comic.url = data["url"]
+        comic.latest_chapter = data["chapter"]
     else:
         comic = Comic(
-            title = data["title"],
-            chapter = data["chapter"],
-            url = data["url"]
+            title=data["title"],
+            series_url=url,
+            latest_chapter=data["chapter"],
+            current_chapter=data["chapter"],
+            current_url=data["url"]
         )
 
     db.add(comic)
-    db.commit()  
-
-    print("AFTER COMMIT:", comic.chapter, comic.url)
+    db.commit()
 
     return comic
+
 
 @app.get("/reading")
 def get_reading():
@@ -45,6 +46,47 @@ def get_reading():
     comics = db.query(Comic).all()
 
     return comics
+
+
+@app.put("/reading/{comic_id}")
+def update_chapter(comic_id: int, current_chapter: str):
+    db = SessionLocal()
+
+    comic = db.query(Comic).filter(Comic.id == comic_id).first()
+
+    if not comic:
+        return {"error": "Reading not found"}
+
+    parser = AsuraParse()
+    chapters = parser.get_chapters(comic.series_url)
+
+    print("SERIES URL:", comic.series_url)
+    print("REQUESTED CHAPTER:", current_chapter)
+    print("CHAPTERS FOUND:", chapters)
+
+    requested_chapter = float(current_chapter)
+
+    matching_chapter = next(
+        (
+            chapter for chapter in chapters
+            if float(chapter["chapter"]) == requested_chapter
+        ),
+        None
+    )
+
+    if not matching_chapter:
+        return {"error": "Chapter not found"}
+
+    comic.current_chapter = current_chapter
+    comic.current_url = matching_chapter["url"]
+
+    db.commit()
+    db.refresh(comic)
+
+    print("UPDATED:", comic.current_chapter, comic.current_url)
+
+    return comic
+
 
 @app.delete("/reading/{comic_id}")
 def delete_reading(comic_id: int):
